@@ -12,7 +12,7 @@ export default function FeaturedPosts() {
         className="flex items-end justify-between mb-6"
       >
         <SubTitle className="text-tertiary">Featured Posts</SubTitle>
-        <LinkArrow href="/blog">모든 글 보기</LinkArrow>
+        <LinkArrow href="/post">모든 글 보기</LinkArrow>
       </AnimatedContainer>
       <AnimatedContainer
         variants={fadeIn}
