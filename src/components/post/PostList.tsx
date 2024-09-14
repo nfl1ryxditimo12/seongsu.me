@@ -1,10 +1,10 @@
 import { fadeIn, fadeInUp } from '@/constants/animations';
-import { Post } from '@/types/post';
+import { ReducedPost } from '@/types/post';
 
 import { AnimatedContainer } from '../common';
 import PostItem from './PostItem';
 
-export default function PostList({ postList }: { postList: Post[] }) {
+export default function PostList({ postList }: { postList: ReducedPost[] }) {
   return (
     <>
       {postList.map((post) => (
