@@ -19,17 +19,17 @@ export default function Giscus() {
     scriptElem.async = true;
     scriptElem.crossOrigin = 'anonymous';
 
-    scriptElem.setAttribute('data-repo', 'pysoo/Next-blog');
-    scriptElem.setAttribute('data-repo-id', 'R_kgDOJ0NjBQ');
+    scriptElem.setAttribute('data-repo', 'nfl1ryxditimo12/seongsu.me');
+    scriptElem.setAttribute('data-repo-id', 'R_kgDOMslYNA');
     scriptElem.setAttribute('data-category', 'General');
-    scriptElem.setAttribute('data-category-id', 'DIC_kwDOJ0NjBc4CXzzE');
+    scriptElem.setAttribute('data-category-id', 'DIC_kwDOMslYNM4CiL8B');
     scriptElem.setAttribute('data-mapping', 'pathname');
     scriptElem.setAttribute('data-strict', '0');
     scriptElem.setAttribute('data-reactions-enabled', '1');
     scriptElem.setAttribute('data-emit-metadata', '0');
     scriptElem.setAttribute('data-input-position', 'bottom');
     scriptElem.setAttribute('data-theme', theme);
-    scriptElem.setAttribute('data-lang', 'en');
+    scriptElem.setAttribute('data-lang', 'ko');
 
     ref.current.appendChild(scriptElem);
     setMounted(true);
