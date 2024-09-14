@@ -11,30 +11,31 @@ import {
 } from '@/constants/animations';
 import Layout from '@/layouts/Layout';
 import { allBlogPosts, allSeries } from '@/libs/dataset';
-import { Post, Series } from '@/types/post';
+import { reducePost, reduceSeries } from '@/libs/post';
+import { ReducedPost, ReducedSeries } from '@/types/post';
 
 export const getStaticProps = () => {
   return {
     props: {
-      postList: allBlogPosts,
-      seriesList: allSeries,
+      postList: allBlogPosts.map((post) => reducePost(post)),
+      seriesList: allSeries.map((series) => reduceSeries(series)),
     },
   };
 };
 
-export default function BlogPage({
+export default function PostPage({
   postList,
   seriesList,
 }: {
-  postList: Post[];
-  seriesList: Series[];
+  postList: ReducedPost[];
+  seriesList: ReducedSeries[];
 }) {
   return (
     <Layout
-      title="Blog"
+      title="Post"
       description={`개발에 필요한 지식들을 소소하게 기록하는 공간입니다. \n 시리즈로 연재된 글은 아래의 시리즈 북을 통해 열람할 수 있습니다. 🙌`}
     >
-      <PageSEO title="Blog" description="블로그 설명입니다." url="/blog" />
+      <PageSEO title="Blog" description="블로그 설명입니다." url="/post" />
       <AnimatedContainer variants={fadeInHalf} useTransition>
         <div className="mt-10 mb-4 flex items-end gap-2">
           <SubTitle>{'All Series'}</SubTitle>
@@ -47,7 +48,7 @@ export default function BlogPage({
           <AnimatePresence mode="wait">
             {seriesList.map((series) => (
               <AnimatedContainer key={series.slug} variants={fadeInSlideToLeft}>
-                <Link as={series.slug} href={`/blog/[slug]`}>
+                <Link as={series.slug} href={series.slug}>
                   <HoverCard>
                     <div className="relative h-56 w-40 select-none rounded-lg bg-neutral-200 px-8 pt-8 pb-12 shadow-lg transition-all hover:scale-[1.01] hover:shadow-xl dark:bg-neutral-800">
                       <div className="absolute inset-y-0 left-2.5 w-[1px] bg-neutral-100 dark:bg-neutral-700" />
