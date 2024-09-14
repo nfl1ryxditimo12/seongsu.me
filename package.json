@@ -1,10 +1,10 @@
 {
-  "name": "next-blog",
+  "name": "seongsu.me",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && next export",
+    "build": "next build",
     "postbuild": "yarn sitemap",
     "sitemap": "ts-node --project tsconfig.node.json ./scripts/generateSitemap.ts",
     "start": "next start",

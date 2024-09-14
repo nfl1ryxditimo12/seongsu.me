@@ -6,7 +6,7 @@ const getTitle = (title?: string) => {
   if (!title) return siteConfig.title;
   if (title.length > 10) return title;
 
-  return `${title} - pySoo`;
+  return `${title} - seongsu.me`;
 };
 
 const getRelativeUrl = (url?: string) => {
@@ -88,7 +88,7 @@ export function BlogSEO({
           article: {
             publishedTime: dateTime,
             modifiedTime: dateTime,
-            authors: [`https://github.com/pySoo`],
+            authors: [`https://github.com/nfl1ryxditimo12`],
             tags,
           },
           url,
