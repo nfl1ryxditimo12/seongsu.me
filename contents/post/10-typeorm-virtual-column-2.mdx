@@ -1,0 +1,397 @@
+---
+title: Typeorm Virtual Column 설정 (2)
+description: TypeORM에서 동적인 엔티티를 다루는 방법
+image: '/images/post/10-typeorm-virtual-column-2/cover.png'
+tags:
+  - Node.js
+  - Express
+  - TypeScript
+  - Typeorm
+date: 2022-01-17 03:20:00
+---
+
+![typeorm.png](/images/post/10-typeorm-virtual-column-2/cover.png)
+
+<br />
+
+## <ul><li><a href="https://seongsu.me/typeorm-virtual-column-1" target="_blank">Typeorm Virtual Column 설정 (1)</a></li></ul>
+
+<br />
+<br />
+
+이전 포스팅에서 `getMany()`함수와 `getRawMany()`함수의 차이점을 알아보게 되었는데<br/>
+이번 포스팅에선 가상컬럼을 사용하며 join시 위 함수의 문제와 해결법을 포스팅 해보려 한다.<br/>
+
+<br />
+
+## 😵‍💫 Custom Virtual Column을 사용해야 하는 이유
+
+<br />
+
+```TS
+// station id 1 주변 맛집
+[
+    Shops {
+        id: 1,
+        stationId: 1,
+        shopName: "동찬이네"
+    },
+    Shops {
+        id: 2,
+        stationId: 1,
+        shopName: "사왕이네"
+    },
+    Shops {
+        id: 3,
+        stationId: 1,
+        shopName: "승한이네"
+    }
+]
+
+// station id 2 주변 맛집
+[
+    Shops {
+        id: 4,
+        stationId: 2,
+        shopName: "크래프트 한스"
+    },
+    Shops {
+        id: 5,
+        stationId: 2,
+        shopName: "큰통치킨"
+    },
+    Shops {
+        id: 6,
+        stationId: 2,
+        shopName: "BBQ"
+    }
+]
+```
+
+<br />
+
+예를들어 위처럼 버스 정류소와 주변 맛집이 정류소 pk를 통해 foreign key로 연결이 되어있다 가정해 보자.<br/>
+
+<br />
+
+이렇게 정류소와 주변 맛집의 관계가 맺어져 있는 상황에서 현재 거리 기준 2km 이내 정류소 주변 맛집을 조회하는 쿼리를 실행하면 어떻게 될까?<br/>
+
+<br />
+
+### <span style={{ color: 'red' }}>getRawMany()의 문제</span>
+
+지금 보니 `getRawMany()`함수를 사용하니 가상 컬럼 효과를 낸 것 같은데 해결된거 아니냐? 할 수 있다.<br/>
+그런데 문제는 지금부터이다. 여기서 `inner join` 또는 `left join`을 할 경우<br/>
+
+<br />
+
+`getRawMany()함수로 join & 가상컬럼`
+
+```TS
+[
+    Stations {
+        stations_id: 1,
+        stations_station: "동대문역 2번출구 정류소",
+        stations_latitude: 37.57198805,
+        stations_longitude: 127.0117451,
+        shops_id: 1,
+        shops_stationId: 1,
+        shops_shopName: "동찬이네",
+        distance: 0.4228400907307967
+    },
+    Stations {
+        stations_id: 1,
+        stations_station: "동대문역 2번출구 정류소",
+        stations_latitude: 37.57198805,
+        stations_longitude: 127.0117451,
+        shops_id: 2,
+        shops_stationId: 1,
+        shops_shopName: "사왕이네",
+        distance: 0.4228400907307967
+    },
+
+    ...
+
+    Stations {
+        stations_id: 2,
+        stations_station: "원남동 사거리 정류소",
+        stations_latitude: 37.57578617,
+        stations_longitude: 126.998124,
+        shops_id: 5,
+        shops_stationId: 2,
+        shops_shopName: "큰통치킨",
+        distance: 1.5482886513847316
+    },
+    Stations {
+        stations_id: 2,
+        stations_station: "원남동 사거리 정류소",
+        stations_latitude: 37.57578617,
+        stations_longitude: 126.998124,
+        shops_id: 6,
+        shops_stationId: 2,
+        shops_shopName: "BBQ"
+        distance: 1.5482886513847316
+    }
+]
+```
+
+<br />
+
+위처럼 `distance`를 추가해 조회 할 경우<br/>
+원래 대로면 부모 객체 안에 join된 객체들이 배열을 이뤄 지정한 key의 배열로 저장이 되어야 한다.<br/>
+하지만 `getRawMany()`를 사용하면 부모객체와의 의존성이 모두 사라지며 join된 객체 하나하나가 독립적으로 조회된다.<br/>
+여기서 Typeorm 원시 쿼리 조회의 문제가 나온다.<br/>
+
+<br />
+
+### <span style={{ color: 'red' }}>getMany()의 문제</span>
+
+<br />
+
+그럼 `getMany()`함수를 사용하면 되는것 아니냐?<br/>
+[이전 포스팅](https://seongsu.me/typeorm-virtual-column-1/#code-classlanguage-textgetmany-%EC%82%AC%EC%9A%A9-%EC%8B%9Ccode)에서 봤던 것 처럼 `distance`를 출력하고 싶은데 안나오는 문제가 있어 자세히 알아볼 필요가 없다.<br/>
+
+<br />
+
+## 🤩 Custom Virtual Column을 사용해 보자
+
+<br />
+
+우리가 만들 가상 컬럼은 위 문제를 완벽히 해결해 줄 것이다.<br/>
+
+> 물론 짜기 나름이다 🤪
+
+<br />
+
+Custom Virtual Column을 어떻게 사용하냐면<br/>
+첫째로 데코레이터 설정, 가상 컬럼 설정, 그 뒤 `getMany()`, `getRawMany()`를 대체할 함수 제작이다.<br/>
+그럼 `addSelect()`함수가 호출 될 때 alias 된 컬럼명으로 데코레이터가 등록된 컬럼이 적용될 것이다.<br/>
+
+<br />
+
+- https://typescript-kr.github.io/pages/decorators.html<br/>
+
+  먼저 위 링크에서 데코레이터 & 메타데이터에 관해 알아보자<br/>
+
+<br />
+
+그 뒤 `reflect-metadata`설치가 완료 되었고 `tsconfig.json`에 메타데이터 설정이 완료 되었다면 데코레이터를 만들어 주자.
+
+<br />
+
+### `@modules/decorator.ts`
+
+```TS
+import "reflect-metadata";
+
+const COLUMN_KEY = Symbol("VIRTUAL_COLUMN");
+
+export function VirtualColumn(name?: string): PropertyDecorator {
+    return (target, propertyKey) => {
+        const metaInfo = Reflect.getMetadata(COLUMN_KEY, target) || {};
+
+        metaInfo[propertyKey] = name ?? propertyKey;
+
+        Reflect.defineMetadata(COLUMN_KEY, metaInfo, target);
+    };
+}
+```
+
+<br />
+
+데코레이터 함수 작성이 완료되었으면 Entity에 바로 적용하자!<br/>
+
+<br />
+
+### `@entities/stations.ts`
+
+```TS
+import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
+import { VirtualColumn } from "@modules/decorator.ts";
+
+@Entity("stations")
+export class Stations {
+    @PrimaryGeneratedColumn()
+    id: number;
+
+    @Column("varchar")
+    station: string;
+
+    @Column("double")
+    latitude: number;
+
+    @Column("double")
+    longitude: number;
+
+    // 데코레이터는 distance라는 이름을 가진 컬럼으로 인식하게 된다.
+    @VirtualColumn()
+    distance: number;
+}
+```
+
+<br />
+
+이제 Express 서버가 실행되며 Typeorm이 연결될 때 VirtualColumn()도 같이 적용된다.<br/>
+그 뒤 우리가 원하는 결과를 얻기 위해 `getRawMany()`함수를 커스텀 해보자.<br/>
+
+<br />
+
+### `@modules/queryBuilder.ts`
+
+```TS
+import { SelectQueryBuilder } from "typeorm";
+import "reflect-metadata";
+
+declare module "typeorm" {
+    interface SelectQueryBuilder<Entity> {
+        getAroundShop(this: SelectQueryBuilder<Entity>): Promise<Entity[] | undefined>;
+    }
+}
+
+const COLUMN_KEY = Symbol("VIRTUAL_COLUMN");
+
+SelectQueryBuilder.prototype.getAroundShop = async function () {
+    // 먼저 원시 데이터 조회 결과를 얻어온다
+    const { entities, raw } = await this.getRawAndEntities();
+    let flag = 0;
+    let idx = 0;
+
+    const items = entities.map((entitiy) => {
+        // 원시 결과에서 필요없는 데이터를 쳐내기 위해 반복문을 돌려준다.
+        while (flag === raw[idx]["staions_id"]) {
+            idx++;
+        }
+
+        // 앞전에 작성한 데코레이터를 COLUMN_KEY로 인식하게 한다.
+        const metaInfo = Reflect.getMetadata(COLUMN_KEY, entitiy) ?? {};
+        const item = raw[idx];
+
+        for (const [propertyKey, name] of Object.entries<string>(metaInfo)) {
+            entitiy[propertyKey] = item[name];
+        }
+
+        flag = item["stations_id"];
+        return entitiy;
+    });
+
+    // distance를 포함한 데이터를 반환해준다.
+    return [...items];
+};
+```
+
+<br />
+
+이렇게 되면 기존 Typeorm의 `getRawMany()`의 기능과 거의 비슷하게 만든 `getAroundShop()`함수가 만들어 졌다.<br/>
+이렇게 되면 원래 원했던 부모 객체 안에 join된 객체들이 배열을 이뤄 반환이 될 것이다.<br/>
+
+<br />
+
+### `getAroundShop() 사용 시`
+
+```TS
+import { getRepository } from "typeorm";
+import { getAroundShop } from "@modules/queryBuilder";
+import { Stations } from "@entities/stations";
+import { Shops } from "@entities/shops";
+
+/**
+    lat: 37.57418192,
+    lon: 127.015664,
+    radius(기준 km): 2
+*/
+const aroundStation = async (lat: number, lon: number, radius: number) => {
+    return await getRepository(Stations)
+        .createQueryBuilder("stations")
+        .select()
+        .addSelect(
+                `6371 * acos(cos(radians(${lat})) * cos(radians(latitude)) * cos(radians(longitude) - radians(${lon})) + sin(radians(${lat})) * sin(radians(latitude)))`,
+                "distance"
+            )
+        .leftJoinAndSelect("stations.shops", "shops")
+        .having(`distance <= ${radius}`)
+        .orderBy("distance", "ASC")
+        .getAroundShop();
+}
+
+console.log(aroundStation());
+```
+
+> Entity join하는 방법은 [Typeorm 공식문서](https://typeorm.io)를 참조하자!
+
+<br />
+
+## 🥳 가상 컬럼을 통한 데이터 조회
+
+<br />
+
+```TS
+[
+    Stations {
+        id: 1,
+        station: "동대문역 2번출구 정류소",
+        latitude: 37.57198805,
+        longitude: 127.0117451,
+        shops: [
+            {
+                id: 1,
+                stationId: 1,
+                shopName: "동찬이네"
+            },
+            {
+                id: 2,
+                stationId: 1,
+                shopName: "사왕이네"
+            },
+            {
+                id: 3,
+                stationId: 1,
+                shopName: "승한이네"
+            }
+        ],
+        distance: 0.4228400907307967
+    },
+    Stations {
+        id: 2,
+        station: "원남동 사거리 정류소",
+        latitude: 37.57578617,
+        longitude: 126.998124,
+        shops: [
+            {
+                id: 4,
+                stationId: 2,
+                shopName: "크래프트 한스"
+            },
+            {
+                id: 5,
+                stationId: 2,
+                shopName: "큰통치킨"
+            },
+            {
+                id: 6,
+                stationId: 2,
+                shopName: "BBQ"
+            }
+        ],
+        distance: 1.5482886513847316
+    },
+]
+```
+
+<br />
+
+이로써 테이블에 존재하지 않는 특정 데이터를 포함해 조회하는 로직을 완성할 수 있게 되었다.<br/>
+이게 특별한 기능은 아닌것 같은데 Typeorm에서 정식으로 지원해 주지 않는 바람에 몇일 개고생을 해서 찾고 구현을 하게 되었다.<br/>
+후...😑 왜 이렇게 필요하고 이게 안돼? 라는 기능이 공식 지원이 안돼 개고생을 해야하는지 모르겠지만... 어쨋든 결과가 좋았으니 된것 같다...😅<br/>
+
+> 0.2.37 버전에서 지원 해준다 했으면서 아직도 안해주네...
+
+<br />
+
+## 📚 참고 자료
+
+- Virtual Column solutions for TypeORM
+
+> https://pietrzakadrian.com/blog/virtual-column-solutions-for-typeorm
+
+<br />
+<br />
