@@ -11,11 +11,9 @@ import { IconText, Tag } from '../common';
 import { CalendarIcon, ClockIcon } from '../icons';
 
 export default function PostItem({ post }: { post: ReducedPost }) {
-  const href = !!post.snippetName ? `/snippets/[...slug]` : `/blog/[...slug]`;
-
   return (
     <div className={$('text-ye w-full py-4')}>
-      <Link as={post.slug} href={href}>
+      <Link as={post.slug} href={post.slug}>
         <div className="group">
           <div className="overflow-hidden rounded-xl bg-neutral-200 dark:bg-neutral-800 mb-3 transition-all sm:group-hover:scale-[1.02]">
             <Image

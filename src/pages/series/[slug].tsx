@@ -13,12 +13,12 @@ import {
   staggerTwo,
 } from '@/constants/animations';
 import Layout from '@/layouts/Layout';
-import { allSeries, allSeriesName } from '@/libs/dataset';
+import { allSeries } from '@/libs/dataset';
 import { Series } from '@/types/post';
 
 export const getStaticPaths: GetStaticPaths = () => {
   return {
-    paths: allSeriesName.map((seriesName) => `/blog/${seriesName}`),
+    paths: allSeries.map((series) => `/series/${series.seriesName}`),
     fallback: 'blocking',
   };
 };

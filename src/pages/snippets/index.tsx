@@ -70,7 +70,7 @@ export default function SnippetPage({
       <PageSEO
         title="Snippets"
         description="Snippets 설명입니다."
-        url="/snippets"
+        url="/snippet"
       />
       <AnimatedContainer variants={staggerHalf} useTransition>
         <AnimatedContainer

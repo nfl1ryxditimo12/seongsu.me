@@ -12,6 +12,7 @@ import remarkBreaks from 'remark-breaks';
 import remarkGfm from 'remark-gfm';
 
 import rehypeCodeWrap from './src/libs/rehypeCodeWrap';
+import { slugStore } from './src/libs/slug';
 
 const fields: FieldDefs = {
   title: { type: 'string', required: true },
@@ -21,6 +22,8 @@ const fields: FieldDefs = {
   draft: { type: 'boolean' },
   image: { type: 'string' },
   icon: { type: 'string' },
+  isFeatured: { type: 'boolean', default: false },
+  isVisible: { type: 'boolean', default: true },
 };
 
 export const Post = defineDocumentType(() => ({
@@ -31,7 +34,13 @@ export const Post = defineDocumentType(() => ({
   computedFields: {
     slug: {
       type: 'string',
-      resolve: (post) => `/${post._raw.flattenedPath}`,
+      resolve: (post) => {
+        if (post._raw.sourceFileName === 'index.mdx') {
+          return '/' + post._raw.flattenedPath;
+        } else {
+          return '/post/' + slugStore.get(post._raw.sourceFilePath);
+        }
+      },
     },
     readingMinutes: {
       type: 'string',
@@ -45,7 +54,7 @@ export const Post = defineDocumentType(() => ({
 }));
 
 const contentSource = makeSource({
-  contentDirPath: 'posts',
+  contentDirPath: 'contents',
   documentTypes: [Post],
   mdx: {
     remarkPlugins: [remarkGfm, remarkBreaks],

@@ -11,7 +11,7 @@ export default function NotFound() {
         <p className="text-secondary mb-8">찾을 수 없는 페이지입니다. 🥲</p>
 
         <NavItem
-          href="/blog"
+          href="/post"
           className="rounded-md px-4 py-2 ring-1 ring-neutral-400/70"
         >
           블로그로 돌아가기

@@ -9,7 +9,7 @@ import { CalendarIcon, ClockIcon } from '../icons';
 
 export default function SnippetItem({ post }: { post: ReducedPost }) {
   return (
-    <Link as={post.slug} href={`/snippets/[...slug]`}>
+    <Link as={post.slug} href={post.slug}>
       <div
         className={$(
           'h-full group w-full py-4 transition-all hover:bg-neutral-200 dark:hover:bg-neutral-800',

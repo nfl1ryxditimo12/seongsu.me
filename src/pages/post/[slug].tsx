@@ -2,23 +2,23 @@ import { GetStaticPaths, GetStaticProps } from 'next';
 
 import { PostNavigationProps } from '@/components/post/PostNavigation';
 import PostLayout, { PostLayoutProps } from '@/layouts/PostLayout';
-import { allBlogPosts, allSeries } from '@/libs/dataset';
+import { allPost, allSeries } from '@/libs/dataset';
 import { parseContents } from '@/libs/mdx';
 import { Series } from '@/types/post';
 
 export const getStaticPaths: GetStaticPaths = async () => {
   return {
-    paths: allBlogPosts.map((post) => post.slug),
+    paths: allPost.map((post) => post.slug),
     fallback: 'blocking',
   };
 };
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
-  const { slugs } = params as { slugs: string[] };
-  const slug = `/blog/${[...slugs].join('/')}`;
+  const { slug } = params as { slug: string };
+  const path = `/post/${slug}`;
 
-  const post = allBlogPosts.find((v) => v.slug === slug);
-  const postIndex = allBlogPosts.findIndex((v) => v.slug === slug);
+  const post = allPost.find((v) => v.slug === path);
+  const postIndex = allPost.findIndex((v) => v.slug === path);
 
   if (!post || postIndex < 0) {
     return {
@@ -27,8 +27,8 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
   }
 
   const postNavigation: PostNavigationProps = {
-    prevPost: allBlogPosts.at(postIndex + 1) ?? null,
-    nextPost: postIndex === 0 ? null : allBlogPosts.at(postIndex - 1) ?? null,
+    prevPost: allPost.at(postIndex + 1) ?? null,
+    nextPost: postIndex === 0 ? null : allPost.at(postIndex - 1) ?? null,
   };
 
   let series: Series | null = null;
@@ -36,7 +36,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
   if (post.seriesName) {
     series =
       allSeries.find((series) =>
-        series.slug.startsWith(`/blog/${post.seriesName}`),
+        series._raw.sourceFilePath.startsWith(`series/${post.seriesName}`),
       ) ?? null;
   }
 
