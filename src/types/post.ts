@@ -1,5 +1,12 @@
 import { Post as TPost } from 'contentlayer/generated';
 
+export type PostMetadata = {
+  sourcePath: string;
+  date: Date;
+};
+
+export type SlugStore = Map<string, string>;
+
 export type Optional<Type, Key extends keyof Type> = Omit<Type, Key> &
   Partial<Pick<Type, Key>>;
 
