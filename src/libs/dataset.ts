@@ -1,4 +1,5 @@
 import { allPosts } from 'contentlayer/generated';
+import dayjs from 'dayjs';
 
 import { defaultCoverImage } from '@/constants/image';
 import { Post, PostPressedCardType, Series } from '@/types/post';
@@ -7,29 +8,39 @@ import { reducePost } from './post';
 
 export const allSeriesName = allPosts
   .filter((post) => post._raw.sourceFilePath.includes('/index.mdx'))
-  .map((post) => post.slug.split('/')[2]);
+  .map((post) => post._raw.sourceFilePath.split('/')[1]);
 
-export const allBlogPosts: Post[] = allPosts
+export const allSnippetName = allPosts
+  .filter((post) => post._raw.sourceFilePath.includes('snippet'))
+  .map((post) => post._raw.sourceFilePath.split('/')[1]);
+
+export const allPost = allPosts
   .filter(
-    (post) =>
-      !post.draft &&
-      post._raw.sourceFilePath.includes('blog') &&
-      !post._raw.sourceFilePath.includes('/index.mdx'),
+    (post) => !post.draft && !post._raw.sourceFilePath.includes('/index.mdx'),
   )
   .map((post) => ({
     ...post,
     image: post.image ? post.image : defaultCoverImage,
     seriesName:
-      allSeriesName.find((seriesName) => post.slug.includes(seriesName)) ??
-      null,
+      allSeriesName.find((seriesName) =>
+        post._raw.flattenedPath.includes(seriesName),
+      ) ?? null,
+    snippetName:
+      allSnippetName.find((snippetName) =>
+        post._raw.flattenedPath.includes(snippetName),
+      ) ?? null,
   }))
   .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+export const allBlogPosts: Post[] = allPost.filter(
+  (post) => post.snippetName === null,
+);
+
 export const allSnippets: Post[] = allPosts
-  .filter((post) => post._raw.sourceFilePath.includes('snippets'))
+  .filter((post) => post._raw.sourceFilePath.includes('snippet'))
   .map((snippet) => ({
     ...snippet,
-    snippetName: snippet.slug.split('/')[2] ?? null,
+    snippetName: snippet._raw.sourceFilePath.split('/')[1] ?? null,
   }))
   .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
@@ -39,7 +50,7 @@ export const allSeries: Series[] = allPosts
   .filter((post) => post._raw.sourceFilePath.includes('/index.mdx'))
   .map((series) => ({
     ...series,
-    seriesName: series.slug.split('/')[2],
+    seriesName: series._raw.sourceFilePath.split('/')[1],
     posts: allBlogPosts
       .filter((post) => series.slug.includes(post.seriesName ?? 'none'))
       .map(reducePost)
@@ -47,90 +58,12 @@ export const allSeries: Series[] = allPosts
   }))
   .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-export const allFeaturedPosts: PostPressedCardType[] = [
-  {
-    href: '/blog/retrospect/7-toss-interview',
-    imgUrl: '/posts/7-toss-interview/240603-010120.png',
-    title: '과제 탈락을 딛고 토스증권 최종 면접까지',
-    date: '2024.05.31',
-  },
-  {
-    href: '/blog/retrospect/5-daangn-interview',
-    imgUrl: '/posts/5-daangn-interview/240115-034801.png',
-    title: '당근마켓 최종 면접까지의 과정을 돌아보며',
-    date: '2024.01.15',
-  },
-  {
-    href: '/blog/frontend/12-suspense-errorboundary',
-    imgUrl: '/posts/12-suspense-errorboundary/240304-055427.png',
-    title:
-      '선언적 비동기 처리로 사용자 경험 향상시키기 (Suspense, ErrorBoundary)',
-    date: '2024.03.04',
-  },
-  {
-    href: '/blog/retrospect/2-abstract-architecture',
-    imgUrl: '/posts/2-abstract-architecture/cover.png',
-    title: '변화에 유연한 설계를 위한 고민 - 추상화란 무엇인가?',
-    date: '2023.11.19',
-  },
-  {
-    href: '/blog/retrospect/1-devcourse-MIL-1',
-    imgUrl: '/posts/1-devcourse-MIL-1/featured.png',
-    title: '퇴사 후 나는 어떤 성장을 이루었나 - 데브코스 회고',
-    date: '2023.10.23',
-  },
-  {
-    href: '/blog/retrospect/3-devcourse-MIL-2',
-    imgUrl: '/posts/3-devcourse-mil-2/cover.png',
-    title: '차별화된 나만의 무기 찾기 - 데브코스 회고',
-    date: '2023.11.22',
-  },
-  {
-    href: '/blog/frontend/11-graphql',
-    imgUrl: '/posts/11-graphql/featured.png',
-    title: 'REST API에서 GraphQL로의 패러다임 전환 - Facebook이 주목한 기술',
-    date: '2023.10.20',
-  },
-  {
-    href: '/blog/nextjs/3-performance',
-    imgUrl: '/posts/3-performance/cover.png',
-    title: 'Lighthouse로 Next.js 성능 44% 개선하기',
-    date: '2023.09.08',
-  },
-  {
-    href: '/blog/frontend/8-monorepo',
-    imgUrl: '/posts/8-monorepo/cover.png',
-    title: 'yarn workspace와 사내 모노레포 도입 여정 🏃🏼‍♂️',
-    date: '2023.09.05',
-  },
-  {
-    href: '/blog/nextjs/1-ssr-ssg-isr',
-    imgUrl: '/posts/1-ssr-ssg-isr/featured.png',
-    title: 'Next.js의 렌더링 방식 이해하기 - SSR, SSG, ISR',
-    date: '2023.08.21',
-  },
-  {
-    href: '/blog/frontend/4-module-bundler',
-    imgUrl: '/posts/4-module-bundler/featured.png',
-    title: '모듈 번들러란? - Webpack vs Vite 무엇을 써야 할까요?',
-    date: '2023.08.18',
-  },
-  {
-    href: '/blog/nextjs/2-lighthouse',
-    imgUrl: '/posts/2-lighthouse/cover.png',
-    title: '웹 페이지 성능 개선에 필요한 Lighthouse 지표 알아보기',
-    date: '2023.09.06',
-  },
-  {
-    href: '/blog/frontend/9-optimizing-loading-speed',
-    imgUrl: '/posts/9-optimizing-loading-speed/featured.png',
-    title: 'React의 초기 렌더링 속도 최적화하기',
-    date: '2023.09.15',
-  },
-  {
-    href: '/blog/frontend/10-cors',
-    imgUrl: '/posts/10-cors/featured.png',
-    title: '웹 개발자의 신고식 🚨 CORS로부터 해방 되기',
-    date: '2023.10.06',
-  },
-];
+export const allFeaturedPosts: PostPressedCardType[] = allPosts
+  .filter((post: Post) => post.isFeatured)
+  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  .map((post) => ({
+    href: post.slug,
+    imgUrl: post.image ?? defaultCoverImage,
+    title: post.title,
+    date: dayjs(post.date).format('YY.MM.DD'),
+  }));

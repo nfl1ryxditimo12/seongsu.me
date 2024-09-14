@@ -11,9 +11,8 @@ import rehypeSlug from 'rehype-slug';
 import remarkBreaks from 'remark-breaks';
 import remarkGfm from 'remark-gfm';
 
-import { slugStore } from '@/libs/slug';
-
 import rehypeCodeWrap from './src/libs/rehypeCodeWrap';
+import { slugStore } from './src/libs/slug';
 
 const fields: FieldDefs = {
   title: { type: 'string', required: true },
