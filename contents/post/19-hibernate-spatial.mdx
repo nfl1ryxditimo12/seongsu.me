@@ -1,0 +1,220 @@
+---
+title: Hibernate Spatial을 이용한 좌표간 거리계산 (feat. PostGIS, H2GIS)
+description: Geometric API를 이용하여 좌표 간 거리를 쉽게 구할 수 있습니다.
+image: '/images/post/19-hibernate-spatial/cover.webp'
+tags:
+  - Spring
+  - Hibernate
+  - PostgreSQL
+  - H2
+date: 2022-11-20 13:17:00
+---
+
+![hibernate logo](/images/post/19-hibernate-spatial/Hibernate_logo.png)
+
+<br />
+
+## 💽 Hibernate Spatial
+
+<br />
+
+Hibernate Spatial은 지리 데이터를 계산하기 위해 만들어 졌고, Hibernate 5.0 버전 부터 Hibernate 라이브러리에 공식적으로 마이그레이션이 됐다.<br />
+
+현재 지원하는 데이터베이스는 `Oracle`, `PostgreSQL`, `MySQL`, `MSSQL`, `H2`이고, 각 데이터베이스에 구현 되어있는 지리 데이터처리 구현체를 추상화한 인터페이스가 `Hibernate Spatial`이다.<br />
+
+Hibernate Spatial은 [JTS](https://www.tsusiatsoftware.net/jts/main.html)와 [
+geolatte-geom](https://github.com/GeoLatte/geolatte-geom)이라는 기하학 모델을 제공한다고 한다.<br />
+
+이러한 GIS(Geometry Information System)를 `Native Query`로 날리지 않고 Hibernate에 추상화된 함수를 통해 JPQL로 쉽게 짤 수 있다.<br />
+
+<br />
+
+### 👈 어떤 데이터베이스를 사용해야 할까?
+
+<br />
+
+![hibernate function](/images/post/19-hibernate-spatial/hibernate-function.png)
+
+> [Hibernate Spatial Function](https://docs.jboss.org/hibernate/orm/current/userguide/html_single/Hibernate_User_Guide.html#spatial-configuration)
+
+<br />
+
+Geometry 함수를 지원하는 데이터베이스는 많이 있다. 하지만 이 포스팅에서 작성할 내용인 `ST_Distance`, `ST_Dwithin`과 같은 좌표 간 거리를 간단하게 반환해주는 함수를 사용하기엔 이식성이 떨어지는 데이터베이스가 존재한다.<br />
+
+원래는 MySQL을 사용하려 했지만, 위 거리계산 함수를 Hibernate에서 지원하지 않아 `Native Query`로 사용해야 돼 ORM을 사용하는 이유를 찾지 못해 PostreSQL을 사용하기로 했다.<br />
+
+또한 테스트를 위해 H2 Database를 사용해야 하는데, H2GIS가 PostGIS를 기반으로 제작되어서 테스트가 용이한 이유도 있다.<br />
+
+<br />
+
+## ⬇️ PostgreSQL, PostGIS 설치
+
+<br />
+
+우선 원하는 PostgreSQL을 설치하고, PostgreSQL로 지리계산을 하려면 `PostGIS` 라이브러를 설치해야 한다.<br />
+
+`PostgreSQL 설치 방법과 버전은 너무 간단하니 패스!`<br />
+
+> [PostGIS Relase](https://postgis.net/tags/3/)
+
+<br />
+
+![postgis relase](/images/post/19-hibernate-spatial/postgis-relase.png)
+
+> 위 링크에서 릴리즈 버전을 선택할 때 지원하는 PostgreSQL 버전을 꼭 확인해야 한다!
+
+<br />
+
+PostgreSQL, PostGIS 설치가 모두 끝났으면, Extension 설정을 다음과 같이 해줘야 한다.<br />
+
+```SQL
+CREATE EXTENSION postgis;
+```
+
+이제 데이터베이스에 지리데이터 계산 함수를 사용할 수 있고, 지리데이터 타입을 사용할 수 있게 된다.<br />
+
+PostGIS 지리 함수에 대해선 아래 링크를 참고해보자<br />
+
+> [PostGIS Special Functions Index](https://postgis.net/docs/manual-1.5/ch08.html)
+
+<br />
+
+## ✍️ Hibernate 설치 및 설정
+
+<br />
+
+우선 Gradle설정을 해준다.<br />
+
+```gradle
+plugins {
+    id 'org.springframework.boot' version '2.7.5'
+}
+
+dependencies {
+  implementation 'org.springframework.boot:spring-boot-starter-web'
+  implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+  implementation group: 'org.hibernate', name: 'hibernate-spatial'
+  implementation group: 'org.postgresql', name: 'postgresql'
+  runtimeOnly 'org.postgresql:postgresql'
+}
+```
+
+Spring은 `2.7.5`버전을 사용할 예정이고 Hibernate는 `spring-boot-starter`에 명시된 버전을 사용할 것이다.<br />
+
+그리고 `hibernate-spatial`, `jpa`, `postgresql` implementation을 추가해준다.<br />
+
+Spring boot 버전 별 라이브러리 의존성은 [스프링부트 공식 페이지](https://spring.io/blog)에 잘 나와있다!<br />
+
+> [Spring boot 2.7.5 라이브러리 의존성은 여기서 확인](https://docs.spring.io/spring-boot/docs/2.7.5/reference/html/dependency-versions.html#appendix.dependency-versions)
+
+<br />
+
+### ⚙️ application.yml 설정
+
+<br />
+
+```yml
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/test_db # DB host
+    username: username # DB username
+    password: password # DB password
+    driver-class-name: org.postgresql.Driver # DB driver
+  jpa:
+    hibernate:
+      ddl-auto: create # 작성된 entity에 따라 스키마 자동 생성
+      use-new-id-generator-mappings: true # pk 설정
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+    # 중요!!
+    database-platform: org.hibernate.spatial.dialect.postgis.PostgisDialect
+```
+
+<br />
+
+위에서 중요한 부분은 `spring.jpa.database-platform`이고, 이 부분은 Hibernate Spatial의 지리 함수를 썼을 때 PostGIS 함수로 매핑해주는 Dialect 설정이다.<br />
+
+PostgreSQL 10버전 이상부터는 위 코드의 Dialect를 사용하면 된다고 한다.<br />
+
+PostgreSQL 버전에 따라 Dialect가 다른데 이는 아래 링크에 첨부하겠다.<br />
+
+> [Package org.hibernate.spatial.dialect.postgis](https://docs.jboss.org/hibernate/orm/5.4/javadocs/org/hibernate/spatial/dialect/postgis/package-summary.html)
+
+<br />
+
+### 🔌 JPQL로 작성한 GIS 함수
+
+<br />
+
+```Java
+
+...
+
+import org.locationtech.jts.geom.Point;
+import javax.persistence.*;
+
+@Entity
+public class Test {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", unique = true, nullable = false)
+    private Long id;
+
+    @Column(name = "name", nullable = false)
+    private String name;
+
+    @Column(name = "gps", nullable = false)
+    private Point gps;
+
+}
+```
+
+<br />
+
+우선 거리 계산을 위해 `Test` 엔티티를 작성해 주고, `Geometry` 타입인 Point 타입을 이용해 컬럼을 작성해 준다.<br />
+
+<br />
+
+```Java
+public interface TestRepository extends JpaRepository<Test, Long> {
+
+    /*
+        dwithin 함수는 반경(단위: m) 내에 존재하는지 boolean 값으로 응답함
+        4번째 인자는 평면에서 구할 것인지, 구에서 구할 것인지 정하는 flag로 false인 경우 구에서 거리를 계산함
+    */
+    @Query(value = "select t from Test t where dwithin(t.gps, :point, 30000, false) = true")
+    List<Test> findTestByDistance(@Param("point") Point point);
+
+}
+```
+
+<br />
+
+그 뒤 Repository에서 `JPQL`을 사용하여 where절에 GIS 함수인 `dwithin`을 사용해 데이터베이스에 저장된 좌표와의 거리계산을 통해 List로 응답을 받게 코드를 작성한다.<br />
+
+> [Dwithin이란? (PostGIS ST_Dwithin)](https://postgis.net/docs/ST_DWithin.html)
+
+<br />
+
+Hibernate에 정의된 내용에 따르면, 두 Geometry(Point)타입과 Double 형인 distance를 사용하여 두 좌표간 거리가 distance 내에 포함되는지 `boolean` 형태로 리턴해 주는 함수이다.<br />
+
+> distance 기준은 미터이다.
+
+<br />
+
+![st_dwithin](/images/post/19-hibernate-spatial/st_diwthin.png)
+
+> PostGIS description
+
+<br />
+
+위 레포지토리 코드를 보면, 4번째 인자로 boolean이 추가되었는데<br />
+이는 주석에 적혀있는 것처럼 `구`에서 거리 계산을 할 것인지, `평면`에서 계산할 것인지 나타내는 값으로 위도, 경도를 이용한 거리 계산이 필요하다면 `true`로 인자를 전달하면 된다.<br />
+
+<br />
+
+<br />
+<br />
