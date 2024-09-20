@@ -15,7 +15,7 @@ type PostHeaderProps = {
 export default function PostHeader({ post, series }: PostHeaderProps) {
   const headerTagTitle = series?.title ?? post.snippetName;
   const headerTagSlug =
-    series?.slug ?? `/snippets?key=${post.snippetName ?? 'all'}`;
+    series?.slug ?? `/snippet?key=${post.snippetName ?? 'all'}`;
 
   return (
     <AnimatedContainer variants={fadeInHalf}>

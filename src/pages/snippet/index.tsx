@@ -78,7 +78,7 @@ export default function SnippetPage({
           className="bg-primary sticky top-0 z-10 -mx-2 flex items-center gap-2 overflow-scroll bg-opacity-70 px-2 py-4 backdrop-blur transition-all no-scrollbar dark:bg-opacity-70"
         >
           <AnimatedContainer variants={fadeInHalf}>
-            <Link href="?key=all">
+            <Link href="?key=all" passHref>
               <Pill
                 selected={isAll}
                 className="cursor-pointer whitespace-nowrap"
@@ -89,7 +89,7 @@ export default function SnippetPage({
           </AnimatedContainer>
           {snippetList.map(({ key, postList }) => (
             <AnimatedContainer key={key} variants={fadeInHalf}>
-              <Link href={`?key=${key}`}>
+              <Link href={`?key=${key}`} passHref>
                 <Pill
                   className="cursor-pointer whitespace-nowrap"
                   selected={key === selectedKey}
