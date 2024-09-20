@@ -18,6 +18,7 @@ export default function LinkArrow({
         'text-mute hover:text-primary',
         className,
       )}
+      passHref
     >
       {children}
       <svg

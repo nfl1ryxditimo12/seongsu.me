@@ -23,7 +23,7 @@ export default function PostHeader({ post, series }: PostHeaderProps) {
       {headerTagTitle && (
         <div className="mt-2 flex justify-center gap-1">
           {post.snippetName && <span>snippet: </span>}
-          <Link href={headerTagSlug}>
+          <Link href={headerTagSlug} passHref>
             <span className="text-sm font-medium underline underline-offset-4 sm:text-base">
               {headerTagTitle}
             </span>

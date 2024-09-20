@@ -48,7 +48,7 @@ export default function PostPage({
           <AnimatePresence mode="wait">
             {seriesList.map((series) => (
               <AnimatedContainer key={series.slug} variants={fadeInSlideToLeft}>
-                <Link as={series.slug} href={series.slug}>
+                <Link as={series.slug} href={series.slug} passHref>
                   <HoverCard>
                     <div className="relative h-56 w-40 select-none rounded-lg bg-neutral-200 px-8 pt-8 pb-12 shadow-lg transition-all hover:scale-[1.01] hover:shadow-xl dark:bg-neutral-800">
                       <div className="absolute inset-y-0 left-2.5 w-[1px] bg-neutral-100 dark:bg-neutral-700" />
