@@ -16,7 +16,7 @@ import { slugStore } from './src/libs/slug';
 
 const fields: FieldDefs = {
   title: { type: 'string', required: true },
-  description: { type: 'string', required: true },
+  description: { type: 'string', default: '' },
   date: { type: 'date', required: true },
   tags: { type: 'list', required: true, of: { type: 'string' } },
   draft: { type: 'boolean' },
