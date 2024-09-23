@@ -1,6 +1,6 @@
 ---
 title: Express Afterware 도입
-description: 사실은 Express에 AOP 개념을 주입시킨 것..!
+description: AOP를 이용해 비즈니스 로직을 분리하는 방법
 image: '/images/post/8-express-afterware/cover.jpg'
 tags:
   - Node.js
@@ -20,7 +20,7 @@ date: 2022-01-07 20:23:00
 <br />
 
 사실 Express 프레임워크에 `Afterware`란 기능은 없다<br/>
-그냥 맨 마지막에 실행되는 함수라 이렇게 부르는 것일 뿐이다<br/>
+그냥 맨 마지막에 실행되는 함수라 마음대로 짓게 되었다 😅<br/>
 `Middleware`가 요청 - 응답 사이에 엑세스 권한을 갖는 함수라면<br/>
 `Afterware`는 어플리케이션의 모든 프로세스가 끝난 뒤 응답 직전에 실행되는 함수이다<br/>
 
