@@ -14,7 +14,7 @@ export const siteConfig = {
   author: {
     name: 'Seongsu Kim',
     photo: '/images/profile.jpg',
-    bio: 'Backend Devloper',
+    bio: 'Backend Developer',
     contacts: {
       email: 'holy@seongsu.me',
       github: 'nfl1ryxditimo12',
