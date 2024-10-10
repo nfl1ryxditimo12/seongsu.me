@@ -19,7 +19,7 @@ import { Series } from '@/types/post';
 export const getStaticPaths: GetStaticPaths = () => {
   return {
     paths: allSeries.map((series) => `/series/${series.seriesName}`),
-    fallback: 'blocking',
+    fallback: process.env.NODE_ENV === 'development' ? false : 'blocking',
   };
 };
 

@@ -9,7 +9,7 @@ import { Series } from '@/types/post';
 export const getStaticPaths: GetStaticPaths = async () => {
   return {
     paths: allPost.map((post) => post.slug),
-    fallback: 'blocking',
+    fallback: process.env.NODE_ENV === 'development' ? false : 'blocking',
   };
 };
 
