@@ -13,13 +13,14 @@ import {
   staggerTwo,
 } from '@/constants/animations';
 import Layout from '@/layouts/Layout';
+import { isDev } from '@/libs/core';
 import { allSeries } from '@/libs/dataset';
 import { Series } from '@/types/post';
 
 export const getStaticPaths: GetStaticPaths = () => {
   return {
     paths: allSeries.map((series) => `/series/${series.seriesName}`),
-    fallback: process.env.NODE_ENV === 'development' ? false : 'blocking',
+    fallback: isDev ? false : 'blocking',
   };
 };
 

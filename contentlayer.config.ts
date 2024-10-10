@@ -19,9 +19,9 @@ const fields: FieldDefs = {
   description: { type: 'string', default: '' },
   date: { type: 'date', required: true },
   tags: { type: 'list', required: true, of: { type: 'string' } },
-  draft: { type: 'boolean' },
   image: { type: 'string' },
   icon: { type: 'string' },
+  isDraft: { type: 'boolean', default: false },
   isFeatured: { type: 'boolean', default: false },
   isVisible: { type: 'boolean', default: true },
 };

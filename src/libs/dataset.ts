@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import { defaultCoverImage } from '@/constants/image';
 import { Post, PostPressedCardType, Series } from '@/types/post';
 
+import { isProd } from './core';
 import { reducePost } from './post';
 
 export const allSeriesName = allPosts
@@ -16,7 +17,9 @@ export const allSnippetName = allPosts
 
 export const allPost = allPosts
   .filter(
-    (post) => !post.draft && !post._raw.sourceFilePath.includes('/index.mdx'),
+    (post) =>
+      !post._raw.sourceFilePath.includes('/index.mdx') &&
+      ((isProd && !post.isDraft) || !isProd),
   )
   .map((post) => ({
     ...post,
