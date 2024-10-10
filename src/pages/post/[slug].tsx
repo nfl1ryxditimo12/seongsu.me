@@ -2,6 +2,7 @@ import { GetStaticPaths, GetStaticProps } from 'next';
 
 import { PostNavigationProps } from '@/components/post/PostNavigation';
 import PostLayout, { PostLayoutProps } from '@/layouts/PostLayout';
+import { isDev } from '@/libs/core';
 import { allPost, allSeries } from '@/libs/dataset';
 import { parseContents } from '@/libs/mdx';
 import { Series } from '@/types/post';
@@ -9,7 +10,7 @@ import { Series } from '@/types/post';
 export const getStaticPaths: GetStaticPaths = async () => {
   return {
     paths: allPost.map((post) => post.slug),
-    fallback: process.env.NODE_ENV === 'development' ? false : 'blocking',
+    fallback: isDev ? false : 'blocking',
   };
 };
 
