@@ -16,10 +16,13 @@ export default function PostHeader({ post, series }: PostHeaderProps) {
   const headerTagTitle = series?.title ?? post.snippetName;
   const headerTagSlug =
     series?.slug ?? `/snippet?key=${post.snippetName ?? 'all'}`;
+  const headerTagDraft = post.isDraft ? '(초안) ' : '';
 
   return (
     <AnimatedContainer variants={fadeInHalf}>
-      <Title className="mx-auto mb-4 max-w-3xl text-center">{post.title}</Title>
+      <Title className="mx-auto mb-4 max-w-3xl text-center">
+        {headerTagDraft + post.title}
+      </Title>
       {headerTagTitle && (
         <div className="mt-2 flex justify-center gap-1">
           {post.snippetName && <span>snippet: </span>}
