@@ -55,6 +55,28 @@ pre[class*='language-'] {
   background: var(--prism-background);
 }
 
+/* Code lines */
+
+code[class*='language-']::before {
+  counter-reset: listing;
+}
+
+code[class*='language-'] > span[class*='code-line'] {
+  counter-increment: listing;
+}
+
+code[class*='language-'] > span[class*='code-line']::before {
+  content: counter(listing) ' ';
+  display: inline-block;
+  width: 1.8em;
+  height: 1.8em;
+  padding-left: auto;
+  margin-left: auto;
+  color: #45474a;
+  text-align: right;
+  margin-right: 0.5em;
+}
+
 /* Inline code */
 :not(pre) > code[class*='language-'] {
   padding: 0.1em;
