@@ -3,11 +3,10 @@ title: 쉽게 풀어 쓴 Spring Security 아키텍처
 description: Servlet과 Reactive 환경에 따른 Spring Security의 작동 방식을 알아봅니다.
 image: '/images/series/spring-security/1-basic-concepts/cover.png'
 tags:
-  - spring
+  - kotlin
+  - spring boot
   - spring security
   - servlet
-  - reactive
-  - webflux
 date: 2024-09-23 16:42:42
 isDraft: true
 isFeatured: true
@@ -18,8 +17,8 @@ isFeatured: true
 > **Spring Security 시리즈는 아래 버전을 기준으로 작성되었습니다.**
 >
 > - jdk: corretto-21
-> - spring boot: 3.3.4 <a style={{color: "grey"}} href="https://spring.io/projects/spring-boot#support" target="\_blank" rel="noopener noreferrer">[support]</a>
-> - spring security: 6.3.3 <a style={{color: "grey"}} href="https://spring.io/projects/spring-security#support" target="\_blank" rel="noopener noreferrer">[support]</a>
+> - spring boot: 3.3.x <a style={{color: "grey"}} href="https://spring.io/projects/spring-boot#support" target="\_blank" rel="noopener noreferrer">[support]</a>
+> - spring security: 6.3.x <a style={{color: "grey"}} href="https://spring.io/projects/spring-security#support" target="\_blank" rel="noopener noreferrer">[support]</a>
 
 ---
 
@@ -40,27 +39,31 @@ Spring Security를 설명하기 앞서, 스프링의 HTTP 통신 과정을 간�
 ![Servlet 구조](/images/series/spring-security/1-basic-concepts/servlet-structure.png)
 
 스프링은 HTTP 통신을 위해 서블릿이라는 기술을 사용합니다.
-위 사진의 Web Context가 서블릿 영역으로, 서블릿 컨테이너는 클라이언트의 요청을 받아 DispatcherServlet을 통해 Spring Context로 HTTP 요청을 전달합니다.
+이 포스팅에서 서블릿은 웹 어플리케이션을 개발하며 HTTP 통신을 보다 쉽게 할 수 있게 만들어진 기능이라고 보시면 이해에 도움이 될 것 같습니다. HTTP 메세지를 직접 파싱하거나, TCP 소켓을 관리하는 등의 수고를 덜어주기 때문이죠 😏
 
-<br />
+위 사진의 Web Context가 서블릿 영역으로, 클라이언트 요청을 받으면 서블릿(DispatcherServlet)을 이용해 Spring Context로 HTTP 요청을 전달합니다. 이후 Spring Context에서 비즈니스 로직을 통해 요청에 맞는 응답을 내려주게 됩니다.
 
-#### 알아두면 좋은 내용
-
-- 서블릿과 서블릿 컨테이너는 추상적인 개념으로, 스프링에서 HTTP 통신을 쉽게 돕는 역할을 합니다. 서블릿 컨테이너는 서블릿의 생명주기를 관리하며, HTTP 요청을 받아 서블릿으로 전달합니다.
-- 서블릿의 구현체는 HttpServlet이며, 이를 상속한 DispatcherServlet이라는 자바 클래스가 주로 사용됩니다. DispatcherServlet은 url 기반 라우팅을 지원하여 요청을 적절한 Controller로 전달합니다.
-- 서블릿 컨테이너의 구현체로는 톰캣, 제티 등이 존재하며, HTTP 요청을 받고 메세지를 파싱하여 HttpServletRequest, HttpServletResponse 객체로 변환하는 과정을 담당하기도 합니다.
+그리고 요청이 Spring Context로 전달되기 전, **Filter** 레이어가 존재합니다. Filter는 서블릿 영역에 포함되어 HTTP 요청 전달 전/후로 공통된 작업을 수행할 수 있습니다. 이 글에서 시사하려는 Spring Security가 동작하는 레이어이기도 합니다.
 
 <br/ >
 
-#### 스프링이 HTTP 요청을 처리하는 순서를 요약하면 다음과 같습니다.
+### 스프링이 HTTP 요청을 처리하는 순서를 요약하면 다음과 같습니다.
 
 1. 클라이언트가 HTTP 요청을 서버에 전송합니다.
-2. Servlet Container에서 요청을 읽어 HttpServletRequest, HttpServletResponse 객체로 변환 및 생성합니다.
+2. Servlet Container에서 요청을 읽어 HttpServletRequest, HttpServletResponse 객체를 생성합니다.
 3. Spring Context에 데이터를 전달하기 전, Servlet FilterChain을 실행합니다.
    - FilterChain은 빈으로 등록된 Filter들을 순차적으로 실행합니다.
-4. Filter Chain이 완료된 후 HTTP Message를 Dispatcher Servlet으로 전달합니다.
-5. Dispatcher Servlet은 url 기반 라우팅을 통해 Controller로 요청을 전달합니다.
-6. 비즈니스 로직 수행 후 생성된 HTTP 응답을 Servlet Container를 통해 클라이언트로 응답합니다.
+4. 이후 요청을 DispatcherServlet으로 전달합니다. 이 부분 부터 Spring Context로 전환됩니다.
+5. DispatcherServlet은 URL 기반 라우팅을 통해 Controller로 요청을 전달합니다.
+6. 비즈니스 로직 수행 후, 생성된 HTTP 응답을 Servlet Container를 통해 클라이언트로 응답합니다.
+
+<br />
+
+### 알아두면 좋은 내용
+
+- 서블릿과 서블릿 컨테이너는 추상적인 개념으로, 스프링에서 HTTP 통신을 쉽게 돕는 역할을 합니다. 서블릿 컨테이너는 서블릿의 생명주기를 관리하며, HTTP 요청을 받아 서블릿으로 전달합니다.
+- 서블릿의 구현체는 HttpServlet이며, 이를 상속한 DispatcherServlet이라는 자바 클래스가 주로 사용됩니다. DispatcherServlet은 url 기반 라우팅을 지원하여 요청을 적절한 Controller로 전달합니다.
+- 서블릿 컨테이너의 구현체로는 톰캣, 제티 등이 존재하며, TCP 소켓 통신이나 HTTP 메세지를 파싱하여 HttpServletRequest, HttpServletResponse 객체로 변환하는 과정을 담당합니다.
 
 <br />
 
