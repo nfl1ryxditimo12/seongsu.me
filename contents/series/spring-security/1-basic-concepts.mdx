@@ -1,5 +1,5 @@
 ---
-title: 쉽게 풀어 쓴 Spring Security 기본 개념
+title: 쉽게 풀어 쓴 Spring Security 매커니즘
 description: Spring Boot를 기반한 Spring Security의 작동 방식을 알아봅니다.
 image: '/images/series/spring-security/1-basic-concepts/cover.png'
 tags:
@@ -20,7 +20,8 @@ isFeatured: true
 > - spring boot: 3.3.x <a style={{color: "grey"}} href="https://spring.io/projects/spring-boot#support" target="\_blank" rel="noopener noreferrer">[support]</a>
 > - spring security: 6.3.x <a style={{color: "grey"}} href="https://spring.io/projects/spring-security#support" target="\_blank" rel="noopener noreferrer">[support]</a>
 
----
+<br />
+<br />
 
 > ## 글을 시작하며
 
@@ -31,8 +32,9 @@ Spring Security에서 인증, 인가 등 보안 관련 기능을 처리하기 �
 스프링이 아닌 스프링 부트를 기반으로 하여 많은 부분이 생략되어 있을 수 있습니다.
 
 <br />
+<br />
 
-## 1. 스프링의 HTTP 통신 과정
+## 1. 간단히 알아보는 스프링의 HTTP 통신 과정
 
 ---
 
@@ -49,7 +51,7 @@ Spring Security를 설명하기 앞서, 스프링의 HTTP 통신 과정을 간�
 
 <br />
 
-#### 스프링이 HTTP 요청을 처리하는 순서를 요약하면 다음과 같습니다.
+### 스프링이 HTTP 요청을 처리하는 순서를 요약하면 다음과 같습니다.
 
 1. 클라이언트가 HTTP 요청을 서버에 전송합니다.
 2. Servlet Container에서 요청을 읽어 HttpServletRequest, HttpServletResponse 객체를 생성합니다.
@@ -61,27 +63,31 @@ Spring Security를 설명하기 앞서, 스프링의 HTTP 통신 과정을 간�
 
 <br />
 
-#### 알아두면 좋은 내용
+### 알아두면 좋은 내용
 
 - 서블릿과 서블릿 컨테이너는 추상적인 개념으로, 스프링에서 HTTP 통신을 쉽게 돕는 역할을 합니다. 서블릿 컨테이너는 서블릿의 생명주기를 관리하며, HTTP 요청을 받아 서블릿으로 전달합니다.
 - 서블릿의 구현체는 HttpServlet이며, 이를 상속한 DispatcherServlet이라는 자바 클래스가 주로 사용됩니다. DispatcherServlet은 url 기반 라우팅을 지원하여 요청을 적절한 Controller로 전달합니다.
 - 서블릿 컨테이너의 구현체로는 톰캣, 제티 등이 존재하며, TCP 소켓 통신이나 HTTP 메세지를 파싱하여 HttpServletRequest, HttpServletResponse 객체로 변환하는 과정을 담당합니다.
 
 <br />
+<br />
 
-## 2. FilterChain으로 알아보는 스프링 시큐리티의 작동 방식
+## 2. FilterChain을 알면 스프링 시큐리티가 쉬워집니다.
 
 ---
 
-### FilterChain이란?
+들어가기 앞서 FilterChain이란 무엇일까요? 간단하게 FilterChain에 대한 정의를 알아보겠습니다.
 
 > 단일 HTTP 요청을 처리하기 위한 레이어로 여러개의 Filter들이 사슬처럼 연결되어 있으며 순서에 따라 동기적으로 작동합니다. 비즈니스 로직 전후로 공통된 작업을 수행하거나, 요청을 가로채어 특정 작업을 수행하는 등 다양한 용도로 사용됩니다.
 >
 > Filter는 Spring의 `@Order` 어노테이션이나 `Orderd` 인터페이스 등 여러 방법을 이용해 FilterChain의 순서를 지정할 수 있으며, URL 패턴을 이용해 특정 요청에만 적용이 가능하기도 합니다.
 
 <br />
+<br />
 
-### FilterChain의 구조
+## 3. FilterChain의 구조
+
+---
 
 스프링 시큐리티는 서블릿 Filter를 기반으로 동작하기 때문에, 일반적인 FilterChain의 과정을 함께 살펴보면 이해가 쉬워집니다. 아래 이미지는 [스프링 HTTP 통신 과정](#스프링이-http-요청을-처리하는-순서를-요약하면-다음과-같습니다)의 3번째 단계인 FilterChain의 세부 과정을 나타낸 것입니다.
 
@@ -90,14 +96,17 @@ Spring Security를 설명하기 앞서, 스프링의 HTTP 통신 과정을 간�
 Servlet Container의 HTTP 요청 전처리 과정이 완료된 후 FilterChain이 실행됩니다. FilterChain은 미리 정의된 Filter들을 순차적으로 실행합니다. Filter는 보통 인코딩, 데이터 파싱, 로깅 등 간단한 목적으로 사용된다고 볼 수 있습니다.
 
 여기서 눈여겨볼 점은 **DelegatingFilterProxy**라는 Filter 입니다. 이는 서블릿과 스프링의 생명주기 차이를 방지하기 위한 장치로, DelegatingFilterProxy가 호출되는 시점에 스프링 Bean에 등록된 Filter 구현체를 실행합니다. 이러한 Lazy Loading 전략으로 스프링 Bean에 안전한 접근을 가능하게 합니다.
-<span style={{color: "grey"}}>_스프링 부트는 생명주기 제어가 가능해, DelegatingFilterProxy를 사용하지 않고도 스프링 Bean에 접근이 가능합니다._</span>
+<span style={{color: "grey"}}>_스프링 부트는 생명주기 제어가 가능해, 서블릿 영역에서 프록시 패턴을 이용하지 않아도 스프링 Bean에 접근이 가능합니다._</span>
 
 아래 `Pseudo Code`는 DelegatingFilterProxy의 호출 시점 일부입니다.
 
 ```java
+/* DelegatingFilterProxy.java */
+
 protected Filter initDelegate(WebApplicationContext wac) throws ServletException {
     // 스프링 시큐리티의 경우, targetBeanName은 `securityFilterChain`
     String targetBeanName = this.getTargetBeanName();
+
     // targetBeanName과 일치하는 이름을 가진 Filter Bean을 찾음
     Filter delegate = (Filter)wac.getBean(targetBeanName, Filter.class);
 
@@ -109,25 +118,188 @@ protected Filter initDelegate(WebApplicationContext wac) throws ServletException
 이를 통해 DI와 같은 스프링 기술을 사용할 수 있어, 스프링 시큐리티는 유연하고 확장성있는 보안 설정이 가능하며 서비스의 다양한 요구사항을 충족시킬 수 있습니다.
 
 <br />
+<br />
 
-### Spring Security의 FilterChain
+## 4. Spring Security의 FilterChain
+
+---
 
 ![SecurityFilterChain](/images/series/spring-security/1-basic-concepts/securityfilterchain.png)
 
-SpringFilterChain도 FilterChain과 작동 방식은 비슷합니다.
+DelegatingFilterProxy의 구현체를 보면 SecurityFilterChain이 아닌 FilterChainProxy로 되어 있습니다. 이는 스프링 시큐리티의 시작점이 FilterChainProxy라는 점을 의미하기도 합니다.
 
+FilterChainProxy는 스프링 시큐리티의 중심점이기 때문에 필수적인 작업을 처리합니다. 예를 들어 요구사항에 맞는 SecurityFilterChain 선택, SecurityContext를 비워 메모리 릭을 방지하거나 `StrictHttpFirewall`을 이용해 방화벽을 생성하는 과정 등이 있습니다.
 
-
-<br />
-
-## 3. 스프링 시큐리티를 이용한 보안 처리
-
----
+공통된 작업을 처리한 이후 FilterChainProxy는 보안 작업을 위해 SecurityFilterChain을 호출하여 개발자가 지정한 보안 Filter를 순차적으로 실행합니다.
 
 <br />
 
-## 4. 스프링 시큐리티를 잘 활용하기 위한 방법
+<details>
+<summary style={{fontWeight: "bold", fontSize: "large"}}>스프링 시큐리티의 보안 Filter 실행 순서</summary>
+
+- ChannelProcessingFilter
+- ConcurrentSessionFilter
+- WebAsyncManagerIntegrationFilter
+- SecurityContextPersistenceFilter
+- HeaderWriterFilter
+- CorsFilter
+- CsrfFilter
+- LogoutFilter
+- OAuth2AuthorizationRequestRedirectFilter
+- Saml2WebSsoAuthenticationRequestFilter
+- X509AuthenticationFilter
+- AbstractPreAuthenticatedProcessingFilter
+- CasAuthenticationFilter
+- OAuth2LoginAuthenticationFilter
+- Saml2WebSsoAuthenticationFilter
+- UsernamePasswordAuthenticationFilter
+- ConcurrentSessionFilter
+- OpenIDAuthenticationFilter
+- DefaultLoginPageGeneratingFilter
+- DefaultLogoutPageGeneratingFilter
+- DigestAuthenticationFilter
+- BearerTokenAuthenticationFilter
+- BasicAuthenticationFilter
+- RequestCacheAwareFilter
+- SecurityContextHolderAwareRequestFilter
+- JaasApiIntegrationFilter
+- RememberMeAuthenticationFilter
+- AnonymousAuthenticationFilter
+- OAuth2AuthorizationCodeGrantFilter
+- SessionManagementFilter
+- ExceptionTranslationFilter
+- FilterSecurityInterceptor
+- SwitchUserFilter
+</details>
+
+<br />
+<br />
+
+## 5. 다중 SecurityFilterChain
 
 ---
+
+서비스 요구사항 별 보안 조치를 달리 해야할 경우도 있는데, 아래 사진처럼 FilterChainProxy를 이용해 URL 별 로직을 분리하여 서로 다른 보안 Filter를 동작시킬 수 있습니다.
+
+![Multi-SecurityFilterChain](/images/series/spring-security/1-basic-concepts/multi-securityfilterchain.png)
+
+아래 `Pseudo Code`는 FilterChainProxy에서 SecurityFilterChain을 호출하는 과정을 나타냅니다. 
+
+```java
+/* FilterChainProxy.java */
+
+private void doFilterInternal(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+    // 방화벽 설정하는 단계로 method, url, ip 등이 적절한지 검사
+    FirewalledRequest firewallRequest = this.firewall.getFirewalledRequest((HttpServletRequest)request);
+
+    // RequestMatcher를 기반하여 조건에 맞는 SecurityFilterChain를 가져옴
+    List<Filter> filters = this.getFilters((HttpServletRequest)firewallRequest);
+    
+    // 아래 VirtualFilterChain이 모두 완료된 후 실행되는 콜백
+    // 기존 서블릿 FilterChain으로 돌아가기 위한 장치
+    FilterChain reset = (req, res) -> {
+        firewallRequest.reset();
+        chain.doFilter(req, res);
+    };
+
+    // 단순 Filter 리스트를 FilterChain으로 변환해주는 단계
+    VirtualFilterChain filterChain = this.filterChainDecorator.decorate(reset, filters);
+
+    // Security Filter를 순차적으로 수행함
+    filterChain.doFilter(firewallRequest, firewallResponse);
+}
+```
+
+스프링 시큐리티의 FilterChainProxy는 RequestMatcher를 이용해 어떤 SecurityFilterChain을 사용할 지 정할 수 있는 유연함을 가졌습니다. 이로 인해 공통 작업은 FilterChainProxy로 위임하며, 조건 별 작업은 로직을 달리 구성할 수 있습니다.
+
+사전 정의한 SecurityConfig 클래스에서 아래와 같이 FilterChain을 등록하면 됩니다.
+
+```kotlin
+/* SecurityConfig.kt */
+
+@Configuration
+@EnableWebSecurity
+class SecurityConfig {
+    /* USER, ADMIN 사용자 생성 */
+    @Bean
+    fun userDetailService(): UserDetailsService {
+        val user: User.UserBuilder = User.builder().passwordEncoder { "{noop}$it" }
+        val manager = InMemoryUserDetailsManager()
+        manager.createUser(user.username("user").password("password").roles("USER").build())
+        manager.createUser(user.username("admin").password("password").roles("USER", "ADMIN").build())
+        return manager
+    }
+
+    /* '/admin' 경로로 접근 시 해당 FilterChain을 사용하게 됨 */
+    @Bean
+    @Order(1)
+    fun adminFilterChain(http: HttpSecurity): SecurityFilterChain {
+        http.securityMatcher("/admin")
+        http.authorizeHttpRequests { it.anyRequest().hasRole("ADMIN") }
+        http.httpBasic { }
+
+        return http.build()
+    }
+
+    /*
+        이 외의 URL로 접근하면 해당 FilterChain을 사용하게 됨
+        @Order 어노테이션이 없으면 후순위로 동작함
+    */
+    @Bean
+    fun defaultFilterChain(http: HttpSecurity): SecurityFilterChain {
+        http.authorizeHttpRequests { it.anyRequest().authenticated() }
+        http.formLogin { }
+
+        return http.build()
+    }
+}
+```
+
+FilterChainProxy에서 `securityMatcher`를 기준으로 SecurityFilterChain을 결정하게 됩니다. 이를 통해 서비스 요구사항는 보안 Filter 구성을 달리 할 수 있습니다.
+
+위 코드에서 구성된 SecurityFilterChain은 아래 `Pseudo Code`와 같이 FilterChainProxy에서 선택됩니다.
+
+```java
+/* FilterChainProxy.java */
+
+private List<Filter> getFilters(HttpServletRequest request) {
+    Iterator iter = this.filterChains.iterator();
+    SecurityFilterChain chain;
+
+    do {
+        if (!iter.hasNext()) {
+            return null;
+        }
+
+        chain = (SecurityFilterChain) iter.next();
+
+        /*
+            While 문 조건을 만족하는 FilterChain이 선택됩니다.
+            RequestMatcher를 기반하기 때문에 URL, Request Header 등 다양한 조건을 설정할 수 있습니다.
+        */
+    } while (!chain.matches(request));
+
+    return chain.getFilters();
+}
+```
+![console](/images/series/spring-security/1-basic-concepts/debug.png)
+
+<br />
+<br />
+
+## 6. 동작 구조 요약
+
+---
+
+1. DelegatingFilterProxy가 호출되면 WebApplicationContext를 참조해 Filter 구현체인 WebMvcSecurityConfiguration을 실행함
+   - __WebMvcSecurityConfiguration는 Spring MVC와 Spring Security 연동을 위한 보안 설정을 초기화하고, 필요한 빈을 등록하는 역할을 합니다.__
+2. 
+
+
+이번 글에서는 Spring Security의 내부 동작 원리 중 하나인 Filtering에 대해 살펴보았습니다.
+
+Spring Security는 복잡한 보안 요구사항을 충족시키기 위해 유연하게 설계된 프레임워크입니다. 이 글에서 다룬 내용이 Spring Security의 전반적인 구조와 Filtering 메커니즘을 이해하는 데 도움이 되었길 바랍니다.
+
+다음 글에서는 Spring Security를 이용한 OAuth2 인증에 대해 상세히 다룰 예정입니다.
 
 <br />
