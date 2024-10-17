@@ -30,3 +30,11 @@ body,
 .dark ::selection {
   @apply bg-neutral-500/30;
 }
+
+summary:hover {
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
