@@ -1,7 +1,6 @@
 /* common markdown */
 .prose {
   @apply text-secondary;
-  @apply md:text-justify;
 }
 .prose strong,
 .prose h1,
