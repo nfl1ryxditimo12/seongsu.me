@@ -1,7 +1,7 @@
 ---
 title: 쉽게 풀어 쓴 Spring Security 필터링 매커니즘
 description: 알면 도움되는 스프링 시큐리티의 내부 동작 과정
-image: '/images/series/spring-security/1-basic-concepts/cover.png'
+image: '/images/series/spring-security/cover.png'
 tags:
   - kotlin
   - spring boot
@@ -67,7 +67,6 @@ Servlet 환경을 기준으로 Spring Security가 동작하기 위한 Filtering 
 - 서블릿과 서블릿 컨테이너는 HTTP 통신을 쉽게 처리하기 위한 스프링의 핵심 요소입니다. 서블릿 컨테이너는 서블릿의 생명주기를 관리하며, HTTP 요청을 받아 서블릿으로 전달합니다.
 - 서블릿 컨테이너의 구현체로는 톰캣(Tomcat), 제티(Jetty) 등이 존재하며, TCP 소켓 통신이나 HTTP 메세지를 파싱하여 `HttpServletRequest`, `HttpServletResponse` 객체로 변환하는 과정을 담당합니다.
 - 서블릿의 구현체는 `HttpServlet`이며, 이를 상속한 `DispatcherServlet`이라는 자바 클래스가 주로 사용됩니다. `DispatcherServlet`은 URL 기반 라우팅을 지원하여 요청을 적절한 Controller로 전달합니다.
-- HTTP 요청이 들어오면 서블릿 컨테이너는 스레드를 생성하고,
 
 <br />
 <br />
